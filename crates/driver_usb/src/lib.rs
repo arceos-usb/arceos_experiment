@@ -83,6 +83,7 @@ where
     pub fn init(mut self) -> Self {
         trace!("initializing!");
         self.host_driver_layer.init();
+        trace!("host driver layer init complete");
         self.usb_driver_layer.init();
         trace!("usb system init complete");
         self
