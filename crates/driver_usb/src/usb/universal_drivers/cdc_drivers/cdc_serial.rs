@@ -1,16 +1,30 @@
-use crate::{
-    abstractions::PlatformAbstractions,
-    usb::{
-        descriptors::{desc_device::StandardUSBDeviceClassCode, desc_endpoint::Endpoint}, //todo:check if this is nessesary
-        drivers::driverapi::{USBSystemDriverModule, USBSystemDriverModuleInstance},
-    },
-};
+use alloc::sync::Arc;
+use alloc::vec;
+use crate::{abstractions::PlatformAbstractions, usb::{
+    descriptors::{desc_device::StandardUSBDeviceClassCode, desc_endpoint::Endpoint}, //todo:check if this is nessesary
+    drivers::driverapi::{USBSystemDriverModule, USBSystemDriverModuleInstance},
+}, USBSystemConfig};
+use crate::host::data_structures::MightBeInited;
+use crate::usb::urb::URB;
+use log::trace;
+use spinlock::SpinNoIrq;
 
 pub struct CdcSerialDriver<O>
 where
     O: PlatformAbstractions,
 {
-    ops: O,
+    config: Arc<SpinNoIrq<USBSystemConfig<O>>>,
+}
+
+impl<'a, O> CdcSerialDriver<O>
+where
+    O: PlatformAbstractions + 'static,
+{
+    pub fn new(
+        config: Arc<SpinNoIrq<USBSystemConfig<O>>>,
+    ) -> Arc<SpinNoIrq<dyn USBSystemDriverModuleInstance<'a, O>>> {
+        Arc::new(SpinNoIrq::new(Self { config }))
+    }
 }
 
 impl<'a, O> USBSystemDriverModuleInstance<'a, O> for CdcSerialDriver<O>
@@ -39,7 +53,21 @@ where
         independent_dev: &DriverIndependentDeviceInstance<O>,
         config: Arc<SpinNoIrq<USBSystemConfig<O>>>,
     ) -> Option<Vec<Arc<SpinNoIrq<dyn USBSystemDriverModuleInstance<'a, O>>>>> {
-        todo!()
+        trace!("checking if we should activate CDC serial driver");
+        if let MightBeInited::Inited(topologicalUSBDescriptorRoot) = &*independent_dev.descriptors
+        {
+            let device = &topologicalUSBDescriptorRoot.device.first().unwrap();
+            trace!("device class: {:?}", device.data.class);
+            return match StandardUSBDeviceClassCode::from(device.data.class) {
+                StandardUSBDeviceClassCode::CommunicationsAndCDCControl => {
+                    trace!("activating CDC serial driver!");
+                    Some(vec![CdcSerialDriver::new(config.clone())])
+                }
+                _ => None,
+            };
+        } else {
+            None
+        }
     }
     fn preload_module(&self) {
         trace!("preloading Hid mouse driver!")

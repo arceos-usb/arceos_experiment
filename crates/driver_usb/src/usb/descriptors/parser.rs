@@ -63,6 +63,7 @@ enum ParserStateMachine {
 
 #[derive(Clone, Debug)]
 pub enum ParserMetaData {
+    USBToSerial,
     UVC(u8),
     HID,
     Unknown(ParserMetaDataUnknownSituation),
@@ -84,6 +85,9 @@ impl ParserMetaData {
                 return Self::Unknown(ParserMetaDataUnknownSituation::ReferIAC)
             }
             (StandardUSBDeviceClassCode::HID, _, _) => return Self::HID,
+            StandardUSBDeviceClassCode::CommunicationsAndCDCControl => {
+                return Self::USBToSerial
+            }
             (StandardUSBDeviceClassCode::ReferInterfaceDescriptor, _, _) => {
                 return Self::Unknown(ParserMetaDataUnknownSituation::ReferInterface)
             }
