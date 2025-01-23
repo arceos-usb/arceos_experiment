@@ -1,8 +1,14 @@
 # ChangeLog
 
-## unreleased  v 0.0.0
+## 2025-1-22  v 0.0.0 usb-serial-dev
 
 ### Added
+
+- `src\usb\descriptors\parser.rs`中`ParserMetaData`枚举添加`USBToSerial`，用于标识USB转串口设备。
+- `src\usb\descriptors\parser.rs`中`ParserMetaData`枚举的`determine`方法，添加`StandardUSBDeviceClassCode::CommunicationsAndCDCControl`设备类型的定义，返回`USBToSerial`。
+- `src\usb\universal_drivers\cdc_drivers\cdc_serial.rs`的` CdcSerialDriver`结构体添加`config`成员，`Arc`和`SpinNoIrq`封装的`USBSystemConfig<O>`类型。
+- `src\usb\universal_drivers\cdc_drivers\cdc_serial.rs`的` CdcSerialDriver`结构体添加`new`方法。
+- `src\usb\universal_drivers\cdc_drivers\cdc_serial.rs`中补充`CdcSerialDriverModule`的`should_active`的具体实现。获取设备类型，若为`cdc`，则需要启用。
 
 ### Changed
 
@@ -11,6 +17,9 @@
 ### Fixed
 
 ### Question
+
+- USB转串口应该属于`StandardUSBDeviceClassCode::CommunicationsAndCDCControl`。目前整个系统只会使用一种USB转串口设备，所以暂时仅使用设备类别来匹配驱动。
+- uvc驱动使用`ParserMetaData`来匹配驱动模块（should_active），而hid_mouse使用设备描述符中的class来表示。**添加了USB转串口的`ParserMetaData`的定义，但是最后USB转串口的驱动模块中还是使用设备描述符中的class来匹配驱动。**
 
 ## 2025-1-16   v 0.0.0 usb-serial-dev
 
@@ -34,4 +43,3 @@
 ### Question
 
 - `cdc_serial.rs`引入`descriptors::{desc_device::StandardUSBDeviceClassCode, desc_endpoint::Endpoint}`，这个描述符需要修改吗。
-
