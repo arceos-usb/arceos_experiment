@@ -22,6 +22,7 @@
 - uvc驱动使用`ParserMetaData`来匹配驱动模块（should_active），而hid_mouse使用设备描述符中的class来表示。**添加了USB转串口的`ParserMetaData`的定义，但是最后USB转串口的驱动模块中还是使用设备描述符中的class来匹配驱动。**
 - 
 
+
 ## 2025-1-16   v 0.0.0 usb-serial-dev
 
 ### Added
