@@ -8,7 +8,12 @@ use crate::host::data_structures::MightBeInited;
 use crate::usb::urb::URB;
 use log::trace;
 use spinlock::SpinNoIrq;
-
+use alloc::vec::Vec;
+use crate::glue::ucb::{CompleteCode, TransferEventCompleteCode, UCB};
+use crate::usb::urb::{RequestedOperation};
+use crate::{
+    glue::driver_independent_device_instance::DriverIndependentDeviceInstance,
+};
 pub struct CdcSerialDriver<O>
 where
     O: PlatformAbstractions,

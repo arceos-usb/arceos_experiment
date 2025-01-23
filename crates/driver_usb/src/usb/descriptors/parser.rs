@@ -80,12 +80,13 @@ pub enum ParserMetaDataUnknownSituation {
 impl ParserMetaData {
     //refer https://www.usb.org/defined-class-codes
     pub fn determine(class: u8, subclass: u8, protocol: u8) -> Self {
+        trace!("determine metadata from class:{},subclass:{},protocol:{}", class, subclass, protocol);
         match (class.into(), subclass, protocol) {
             (StandardUSBDeviceClassCode::Miscellaneous, 0x02, 0x01) => {
                 return Self::Unknown(ParserMetaDataUnknownSituation::ReferIAC)
             }
             (StandardUSBDeviceClassCode::HID, _, _) => return Self::HID,
-            StandardUSBDeviceClassCode::CommunicationsAndCDCControl => {
+            (StandardUSBDeviceClassCode::CommunicationsAndCDCControl,_,_)=> {
                 return Self::USBToSerial
             }
             (StandardUSBDeviceClassCode::ReferInterfaceDescriptor, _, _) => {
@@ -155,10 +156,11 @@ where
     pub fn single_state_cycle(&mut self) -> bool {
         match &self.state {
             ParserStateMachine::Device => {
+                trace!("parse single device desc!");
                 self.result = self.parse_single_device_descriptor().ok();
                 self.state = ParserStateMachine::NotReady;
                 trace!("state change:{:?}", self.state);
-                self.current = 0;
+                self.current = 0; 
                 self.current_len = 0;
                 true
             }
@@ -220,8 +222,27 @@ where
         trace!("parse single device desc!");
         if let USBDescriptor::Device(dev) = self.parse_any_descriptor()? {
             {
+                trace!("parsed device.len:{}", dev.len);
+                trace!("parsed device.descriptor_type:{}", dev.descriptor_type);
+                let cd_usb = dev.cd_usb;
+                trace!("parsed device.cd_usb:{}", cd_usb);
+                trace!("parsed device.class:{}", dev.class);
+                trace!("parsed device.subclass:{}", dev.subclass);
+                trace!("parsed device.protocol:{}", dev.protocol);
+                trace!("parsed device.max_packet_size0:{}", dev.max_packet_size0);
+                let vendor = dev.vendor;
+                trace!("parsed device.vendor:{}", vendor);
+                let product_id = dev.product_id;
+                trace!("parsed device.product_id:{}", product_id);
+                let devicee = dev.device;
+                trace!("parsed device.device:{}", devicee);
+                trace!("parsed device.manufacture:{}", dev.manufacture);
+                trace!("parsed device.product:{}", dev.product);
+                trace!("parsed device.serial_number:{}", dev.serial_number);
+                trace!("parsed device.num_configurations:{}", dev.num_configurations);
                 match self.metadata {
                     ParserMetaData::NotDetermined => {
+                        trace!("ParserMetaData::NotDetermined");
                         self.metadata =
                             ParserMetaData::determine(dev.class, dev.subclass, dev.protocol)
                     }
