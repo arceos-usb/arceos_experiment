@@ -63,13 +63,21 @@ where
         {
             let device = &topologicalUSBDescriptorRoot.device.first().unwrap();
             trace!("device class: {:?}", device.data.class);
-            return match StandardUSBDeviceClassCode::from(device.data.class) {
-                StandardUSBDeviceClassCode::CommunicationsAndCDCControl => {
-                    trace!("activating CDC serial driver!");
-                    Some(vec![CdcSerialDriver::new(config.clone())])
-                }
-                _ => None,
-            };
+            let vendor = device.data.vendor;
+            let product_id = device.data.product_id;
+            trace!("vendor: {:x}, product_id: {:x}", vendor, product_id);
+            if device.data.class == StandardUSBDeviceClassCode::VendorSpecific as u8
+                && vendor == 0x1a86
+                && product_id == 0x7523
+            {
+                let driver = CdcSerialDriver::new(config);
+                trace!("activating CDC serial driver");
+                trace!("Vendor id:0x1a86 QinHeng Electronics");
+                trace!("Product id:0x7523 CH340 serial converter");
+                Some(vec![driver])
+            } else {
+                None
+            }
         } else {
             None
         }

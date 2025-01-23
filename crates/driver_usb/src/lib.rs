@@ -162,13 +162,15 @@ where
                         )
                         .bits(),
                         data: Some(buffer_device.addr_len_tuple()),
-                        response:false
+                        response:false  
                     },
                 ) {
                     Ok(_) => {
                         let mut parser = RawDescriptorParser::<O>::new(buffer_device);
+                        trace!("parsing device descriptor");
                         parser.single_state_cycle();
                         let num_of_configs = parser.num_of_configs();
+                        trace!("num of configs: {}", num_of_configs);
                         for index in 0..num_of_configs {
                             let buffer = DMA::new_vec(
                                 0u8,
@@ -198,6 +200,7 @@ where
                                     },
                                 )
                                 .inspect(|_| {
+                                    trace!("get a config descriptor,parsing config descriptor");
                                     parser.append_config(buffer);
                                 });
                         }

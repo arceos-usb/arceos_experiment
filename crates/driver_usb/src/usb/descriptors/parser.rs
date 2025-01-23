@@ -86,7 +86,7 @@ impl ParserMetaData {
                 return Self::Unknown(ParserMetaDataUnknownSituation::ReferIAC)
             }
             (StandardUSBDeviceClassCode::HID, _, _) => return Self::HID,
-            (StandardUSBDeviceClassCode::CommunicationsAndCDCControl,_,_)=> {
+            (StandardUSBDeviceClassCode::VendorSpecific,0,0)=> {
                 return Self::USBToSerial
             }
             (StandardUSBDeviceClassCode::ReferInterfaceDescriptor, _, _) => {
@@ -166,7 +166,9 @@ where
             }
             ParserStateMachine::Config(index) => {
                 let num_of_configs = self.num_of_configs();
+                trace!("parse config desc!,num of configs:{}", num_of_configs);
                 let current_index = *index;
+                trace!("current index:{}", current_index);
                 if current_index >= num_of_configs {
                     self.state = ParserStateMachine::END;
                     trace!("state change:{:?}", self.state);
@@ -182,6 +184,7 @@ where
                 trace!("state change:{:?}", self.state);
                 true
             }
+        
             ParserStateMachine::END => panic!("should not call anymore while reaching end"),
             ParserStateMachine::NotReady => {
                 if let Some(res) = &self.result
@@ -225,15 +228,15 @@ where
                 trace!("parsed device.len:{}", dev.len);
                 trace!("parsed device.descriptor_type:{}", dev.descriptor_type);
                 let cd_usb = dev.cd_usb;
-                trace!("parsed device.cd_usb:{}", cd_usb);
+                trace!("parsed device.cd_usb:{:x}", cd_usb);
                 trace!("parsed device.class:{}", dev.class);
                 trace!("parsed device.subclass:{}", dev.subclass);
                 trace!("parsed device.protocol:{}", dev.protocol);
                 trace!("parsed device.max_packet_size0:{}", dev.max_packet_size0);
                 let vendor = dev.vendor;
-                trace!("parsed device.vendor:{}", vendor);
+                trace!("parsed device.vendor:{:x}", vendor);
                 let product_id = dev.product_id;
-                trace!("parsed device.product_id:{}", product_id);
+                trace!("parsed device.product_id:{:x}", product_id);
                 let devicee = dev.device;
                 trace!("parsed device.device:{}", devicee);
                 trace!("parsed device.manufacture:{}", dev.manufacture);
@@ -265,6 +268,15 @@ where
         let mut cfg =
             USBDescriptor::from_slice(&raw, self.metadata.clone()).and_then(|converted| {
                 if let USBDescriptor::Configuration(cfg) = converted {
+                    trace!("get ch340 config desc!");
+                    trace!("parsed config.len:{}", cfg.length());
+                    trace!("parsed config.ty:{}", cfg.ty());
+                    trace!("parsed config.total_length:{}", cfg.total_length());
+                    trace!("parsed config.num_interfaces:{}", cfg.num_interfaces());
+                    trace!("parsed config.config_val:{}", cfg.config_val());
+                    trace!("parsed config.config_string:{}", cfg.config_string());
+                    trace!("parsed config.attributes:{}", cfg.attributes());
+                    trace!("parsed config.max_power:{}", cfg.max_power());
                     Ok(TopologicalUSBDescriptorConfiguration {
                         data: cfg,
                         child: Vec::new(),
