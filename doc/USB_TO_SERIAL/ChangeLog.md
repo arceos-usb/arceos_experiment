@@ -1,5 +1,50 @@
 # ChangeLog
 
+## 2025-1-24 v 0.0.0 usb-serial-dev
+
+### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+
+## 2025-1-24 v 0.0.0 usb-serial-dev
+
+### Added
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中添加`CdcSerialDriver`的`prepare_for_drive`方法，构造一个设置配置描述符的URB请求。
+
+
+
+### Changed
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`的驱动实例增加了插槽号，接口值、配置值等字段，便于配置URB。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`修改了驱动实例的new方法，修改为new_and_init方法，添加内容。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`修改should_active中返回值的内容。
+
+### Removed
+
+### Fixed
+
+### Question
+
+
+## 2025-1-23 v 0.0.0usb-serial-dev
+
+### Added
+- CH340描述符信息，分别通过Linux和driver_usb的方法读到。doc中添加“ch340信息”（ch340描述符）。
+
+### Changed
+- CH340的USB设备类型是255,不是CDC，因此需要修改`crates/driver_usb/src/usb/descriptors/parser.rs`的`determine`函数逻辑。切换为VendorSpecific。
+
+### Removed
+
+### Fixed
+
+### Question
+
 ## 2025-1-22  v 0.0.0 usb-serial-dev
 
 ### Added
