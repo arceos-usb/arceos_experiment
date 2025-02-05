@@ -100,7 +100,7 @@ where
                 trace!("request transfer!");
                 self.control_transfer(request.device_slot_id, control)
             }
-            usb::urb::RequestedOperation::Bulk => todo!(),
+            usb::urb::RequestedOperation::Bulk(BulkTransfer) => todo!(),
             usb::urb::RequestedOperation::Interrupt(interrupt_transfer) => self
                 .controller
                 .lock()

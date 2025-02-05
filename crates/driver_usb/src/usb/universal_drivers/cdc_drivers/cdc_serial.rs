@@ -1,38 +1,54 @@
-use alloc::sync::Arc;
-use alloc::vec;
-use crate::{abstractions::PlatformAbstractions, usb::{
-    descriptors::{desc_device::StandardUSBDeviceClassCode, desc_endpoint::Endpoint}, //todo:check if this is nessesary
-    drivers::driverapi::{USBSystemDriverModule, USBSystemDriverModuleInstance},
-}, USBSystemConfig};
-use crate::host::data_structures::MightBeInited;
-use crate::usb::urb::URB;
-use log::trace;
+use alloc::string::String;
+use alloc::boxed::Box;
+use alloc::{sync::Arc, vec, vec::Vec};
+use alloc::collections::VecDeque;
+use axalloc::PAGE_SIZE;
+//todo!("is this ok?")
 use spinlock::SpinNoIrq;
-use alloc::vec::Vec;
-use crate::glue::ucb::{CompleteCode, TransferEventCompleteCode, UCB};
-use crate::usb::urb::{RequestedOperation};
+use log::trace;
 use crate::{
-    glue::driver_independent_device_instance::DriverIndependentDeviceInstance,
+    abstractions::{PlatformAbstractions,dma::DMA},
+    glue::{
+        driver_independent_device_instance::DriverIndependentDeviceInstance,
+        ucb::{CompleteCode, TransferEventCompleteCode, UCB},
+    },
+    host::data_structures::MightBeInited,
+    usb::{
+        descriptors::{
+            desc_device::StandardUSBDeviceClassCode,
+            desc_endpoint::Endpoint,
+            topological_desc::{TopologicalUSBDescriptorEndpoint, TopologicalUSBDescriptorFunction},
+        },
+        drivers::driverapi::{USBSystemDriverModule, USBSystemDriverModuleInstance},
+        trasnfer::{
+            control::{bRequest, bmRequestType, ControlTransfer, DataTransferType, Recipient},
+            bulk::BulkTransfer,  
+        },//todo!("transfer or trasnfer?")
+        urb::{RequestedOperation, URB},
+    },
+    USBSystemConfig,
 };
 use xhci::ring::trb::transfer::Direction;
-use crate::{
-    usb::trasnfer::control::{bRequest, bmRequestType, ControlTransfer, DataTransferType, Recipient},
-    usb::descriptors::topological_desc::{TopologicalUSBDescriptorFunction,
-        TopologicalUSBDescriptorEndpoint},
-    };
 
 pub struct CdcSerialDriver<O>
 where
     O: PlatformAbstractions,
 {
     device_slot_id: usize,
-    endpoints: Vec<Endpoint>,
+    in_endpoint: u32, // 输入端点
+    out_endpoint: u32, // 输出端点
     config: Arc<SpinNoIrq<USBSystemConfig<O>>>,
     interface_value: usize,
     config_value: usize,
+    read_urb: URB<'static, O>, // 使用生命周期参数 'static
+    read_data_buffer: Option<SpinNoIrq<DMA<[u8], O::DMA>>>, // 存放读取数据
+    accept_accepted_data: Vec<u8>, // 存放已读取数据
+    urb_buffer: VecDeque<Box<URB<'static, O>>>, // 存放URB
+    write_data_buffer: VecDeque<Box<SpinNoIrq<DMA<[u8], O::DMA>>>>, // 存放写入数据
+    last_urb: Option<URB<'static, O>>, // 存放前一个提交的URB，用作状态机
 }
 
-impl<'a, O> CdcSerialDriver<O>
+impl<O> CdcSerialDriver<O>
 where
     O: PlatformAbstractions + 'static,
 {
@@ -42,20 +58,54 @@ where
         config: Arc<SpinNoIrq<USBSystemConfig<O>>>,
         interface_value: usize,
         config_value: usize,
-    ) -> Arc<SpinNoIrq<dyn USBSystemDriverModuleInstance<'a, O>>> {
+    ) -> Arc<SpinNoIrq<dyn USBSystemDriverModuleInstance<'static, O>>> {
         trace!("CdcSerialDriver initializing");
         trace!("endpoints: {:?}", endpoints);
-        Arc::new(SpinNoIrq::new(
-        Self {
+        let rb = DMA::new_vec(
+            0u8,
+            O::PAGE_SIZE,
+            O::PAGE_SIZE,
+            config.lock().os.dma_alloc(),
+        );
+        // 端点地址最高位为1表示输入端点，最低位为0表示输出端点。属性为0x02表示端点类型为Bulk。
+        trace!(
+            "in_endpoint对应的端点: {:?}", 
+            endpoints
+            .iter()
+            .find(|e| e.endpoint_address & 0x1000_0000 != 0 && e.attributes == 0x02)
+            .unwrap()
+            .clone()
+        );
+        trace!(
+            "out_endpoint对应的端点: {:?}",             
+            endpoints.iter()
+            .find(|e| e.endpoint_address&0x1000_0000 ==0&&e.attributes==0x02)
+            .unwrap()
+            .clone());
+        Arc::new(SpinNoIrq::new(Self {
                 device_slot_id,
-                endpoints,
+                in_endpoint: endpoints.iter().find(|e| e.endpoint_address & 0x1000_0000 != 0 && e.attributes == 0x02).unwrap().clone().doorbell_value_aka_dci(),
+                out_endpoint: endpoints.iter().find(|e| e.endpoint_address & 0x1000_0000 == 0 && e.attributes == 0x02).unwrap().clone().doorbell_value_aka_dci(),
                 config,
                 interface_value,
                 config_value,
+                read_urb: URB::new(
+                    device_slot_id,
+                    RequestedOperation::Bulk(BulkTransfer {
+                        endpoint_id: endpoints.iter().find(|e| e.endpoint_address & 0x1000_0000 != 0 && e.attributes == 0x02).unwrap().clone().doorbell_value_aka_dci() as usize,
+                        buffer_addr_len: rb.addr_len_tuple(),
+                    }),
+                ),
+                read_data_buffer: Some(SpinNoIrq::new(rb)),
+                accept_accepted_data: Vec::new(),
+                urb_buffer: VecDeque::new(),
+                write_data_buffer: VecDeque::new(),
+                last_urb:None,
                 }
             )
-        )      
+        )
     }
+    pub fn write(){}
 }
 
 impl<'a, O> USBSystemDriverModuleInstance<'a, O> for CdcSerialDriver<O>
@@ -71,6 +121,15 @@ where
     fn prepare_for_drive(&mut self) -> Option<Vec<URB<'a, O>>> {
         trace!("CdcSerialDriver preparing for drive");
         let mut todo_list = Vec::new();
+
+        //todo!("设置buffer");
+        let buffer = DMA::new_vec(
+            0u8,
+            2,
+            2,
+            self.config.lock().os.dma_alloc(),
+        );
+
         //设置配置描述符
         todo_list.push(URB::new(
             self.device_slot_id,
@@ -83,10 +142,116 @@ where
                 request: bRequest::SetConfiguration,
                 index: self.interface_value as u16,
                 value: self.config_value as u16,
-                data: None,
+                data: None, //todo!
                 response: true,
             }),
         ));
+        //厂商自定义的配置流程，参考ch341.c的ch341_configure函数
+
+        //第一个控制输入传输：CMD_C3
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::In,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_C3,
+                index: 0,
+                value: 0,
+                data: Some((buffer.addr_len_tuple())), // 传递数据缓冲区地址和大小
+                response: true,
+            }),
+        ));
+
+        // 第一个控制输出传输：CMD_C1
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_C1,
+                index: 0,
+                value: 0,
+                data: None,
+                response: false,
+            }),
+        ));
+
+        // 第二个控制输出传输：CMD_W, 0x1312, 0xd982
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_W,
+                index: 0xd982,
+                value: 0x1312,
+                data: None,
+                response: false,
+            }),
+        ));
+
+        // 第三个控制输出传输：CMD_W, 0x0f2c, 0x0007
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_W,
+                index: 0x0007,
+                value: 0x0f2c,
+                data: None,
+                response: false,
+            }),
+        ));
+
+        // 第二个控制输入传输：CMD_R, 0x2518
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::In,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_R,
+                index: 0,
+                value: 0x2518,
+                data: Some((buffer.addr_len_tuple())), // 传递数据缓冲区地址和大小
+                response: true,
+            }),
+        ));
+
+        // todo!("get status");
+
+        // 第四个控制输出传输：CMD_W, 0x2727, 0
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_W,
+                index: 0,
+                value: 0x2727,
+                data: None,
+                response: false,
+            }),
+        ));
+        
         Some(todo_list)
     }
 }

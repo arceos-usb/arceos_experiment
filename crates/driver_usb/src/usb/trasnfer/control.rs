@@ -44,6 +44,11 @@ pub enum bRequest {
     SetFwStatus = 27,
     SetSel = 48,
     SetIsochDelay = 49,
+    CH341_CMD_R = 0x95,
+    CH341_CMD_W = 0x9A,
+    CH341_CMD_C1 = 0xA1,
+    CH341_CMD_C2 = 0xA4,
+    CH341_CMD_C3 = 0x5F,
     RESERVED,
 }
 

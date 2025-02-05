@@ -11,6 +11,57 @@
 ### Fixed
 
 ### Question
+## 2025-2-3 v 0.0.0 usb-serial-dev
+
+### Added
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中给CdcSerialDriver添加成员和write方法。
+- doc添加开发记录，规划开发方案。
+- `crates/driver_usb/src/usb/trasnfer`中添加bulk.rs，同步修改RequestedOperation和urb_request函数。
+- 
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+
+## 2025-1-24 v 0.0.0 usb-serial-dev
+
+### Added
+- 'crates/driver_usb/src/usb/universal_drivers/cdc_drivers'添加buffer.rs,读写缓冲区定义。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中添加读写缓冲区的Option封装到驱动实例中，初始化为None。
+
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+
+
+## 2025-1-27 v 0.0.0 usb-serial-dev
+
+### Added
+- `crates/driver_usb/src/usb/trasnfer/control.rs`中添加bRequest枚举成员选项，增加厂商自定义的几条命令。参考ch341.h。CMD_R、CMD_W、CMD_C1、CMD_C2、CMD_C3。
+- 'crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs'中添加CH341配置的URB生成语句（todolist）。
+
+
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+- 能不能先使用中断传输看一看效果。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中，CH341配置的URB生成语句，还没有声明一个buffer。这个buffer要定义在ch341结构体中。
+- ch341结构体需要添加控制传输缓冲区，读缓冲区和写缓冲区。
+- 配置完成之后下一步，设计批量传输模式。
 
 ## 2025-1-24 v 0.0.0 usb-serial-dev
 
