@@ -415,7 +415,7 @@ where
     fn trace_dump_context(&self, slot_id: usize) {
         let dev = &self.dev_ctx.device_out_context_list[slot_id];
         trace!(
-            "slot {} {:?}",
+            "trace dump ctx at slot {}:state is {:?}",
             slot_id,
             DeviceHandler::slot(&**dev).slot_state()
         );
@@ -968,6 +968,7 @@ where
         }
 
         fence(Ordering::Release);
+        trace!("dsi:{}", dev_slot_id);
         self.regs.doorbell.update_volatile_at(dev_slot_id, |r| {
             r.set_doorbell_target(1);
         });

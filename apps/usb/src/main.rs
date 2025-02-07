@@ -2,8 +2,8 @@
 #![no_main]
 #![allow(warnings)]
 
-// #[macro_use]
-// extern crate axstd as std;
+#[macro_use]
+extern crate axstd as std;
 extern crate alloc;
 
 use core::{alloc::GlobalAlloc, time::Duration};
@@ -18,7 +18,7 @@ use axhal::{
     paging::PageSize,
 };
 
-use axusb_host::abstractions::{PlatformAbstractions, USBSystemConfig, WakeMethod};
+use axusb_host::abstractions::{PlatformAbstractions, SystemWordWide, USBSystemConfig, WakeMethod};
 use lazy_static::lazy_static;
 
 #[derive(Clone)]
@@ -78,6 +78,8 @@ impl PlatformAbstractions for OSA {
     fn dma_alloc(&self) -> Self::DMA {
         axalloc::global_no_cache_allocator()
     }
+
+    const WORD: axusb_host::abstractions::SystemWordWide = SystemWordWide::X32;
 }
 
 lazy_static! {
@@ -85,23 +87,26 @@ lazy_static! {
     static ref usbsystem: axusb_host::USBSystem<'static, OSA, 512> =
         axusb_host::USBSystem::new(USBSystemConfig {
             base_addr: 0xffff_0000_31a0_8000.into(),
-            wake_method: WakeMethod::Timer(sem.clone()),
+            // wake_method: WakeMethod::Timer(sem.clone()),
+            wake_method: WakeMethod::Yield,
             os: OSA,
         });
 }
 
 #[no_mangle]
+// #[embassy_executor::main]
 fn main() {
-    axstd::thread::spawn(move || {
-        usbsystem
-            .stage_1_start_controller()
-            .stage_2_initialize_usb_layer()
-            .block_run();
-        panic!("okay?")
-    });
+    //panic handler not found, but found when use thread::spawn, wtf...
+    // axstd::thread::spawn(move || {
+    //     loop {
+    //         axstd::thread::sleep(Duration::from_millis(10));
+    //         // sem.add_permits(1);
+    //     }
+    // });
 
-    loop {
-        axstd::thread::sleep(Duration::from_millis(10));
-        sem.add_permits(1);
-    }
+    usbsystem
+        .stage_1_start_controller()
+        .stage_2_initialize_usb_layer()
+        .block_run();
+    // panic!("okay?")
 }
