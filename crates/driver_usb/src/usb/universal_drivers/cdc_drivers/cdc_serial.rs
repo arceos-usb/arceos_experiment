@@ -1,14 +1,20 @@
-use alloc::string::String;
-use alloc::boxed::Box;
-use alloc::{sync::Arc, vec, vec::Vec};
-use alloc::collections::VecDeque;
+use alloc::{
+    boxed::Box,
+    collections::VecDeque,
+    string::String,
+    sync::Arc,
+    vec,
+    vec::Vec,
+};
 use axalloc::PAGE_SIZE;
-//todo!("is this ok?")
 use spinlock::SpinNoIrq;
 use log::trace;
-use xhci::extended_capabilities::debug::Status;
+use xhci::{
+    extended_capabilities::debug::Status,
+    ring::trb::transfer::Direction,
+};
 use crate::{
-    abstractions::{PlatformAbstractions,dma::DMA},
+    abstractions::{PlatformAbstractions, dma::DMA},
     glue::{
         driver_independent_device_instance::DriverIndependentDeviceInstance,
         ucb::{CompleteCode, TransferEventCompleteCode, UCB},
@@ -23,13 +29,12 @@ use crate::{
         drivers::driverapi::{USBSystemDriverModule, USBSystemDriverModuleInstance},
         trasnfer::{
             control::{bRequest, bmRequestType, ControlTransfer, DataTransferType, Recipient},
-            bulk::BulkTransfer,  
-        },//todo!("transfer or trasnfer?")
+            bulk::BulkTransfer,
+        },
         urb::{RequestedOperation, URB},
     },
     USBSystemConfig,
 };
-use xhci::ring::trb::transfer::Direction;
 
 #[derive(Debug)]
 pub enum state_machine {
