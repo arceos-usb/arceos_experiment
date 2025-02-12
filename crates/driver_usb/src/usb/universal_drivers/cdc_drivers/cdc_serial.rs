@@ -447,6 +447,127 @@ where
                 response: true,
             }),
         ));
+        //---------------------以下是配置15200波特率的配置---------------------
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_C1,
+                index: 0xb282,
+                value: 0x2727,
+                data: None,
+                response: true,
+            }),
+        ));
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_W,
+                index: 0x0008,
+                value: 0x0f2c,
+                data: None,
+                response: true,
+            }),
+        ));
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_W,
+                index: 0,
+                value: 0x2727,
+                data: None,
+                response: true,
+            }),
+        ));
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_C1,
+                index: 0xcc83,
+                value: 0xc39c,
+                data: None,
+                response: true,
+            }),
+        ));
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_W,
+                index: 0x0007,
+                value: 0x0f2c,
+                data: None,
+                response: true,
+            }),
+        ));
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_C2,
+                index: 0,
+                value: 0x00df,
+                data: None,
+                response: true,
+            }),
+        ));
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_W,
+                index: 0,
+                value: 0x2727,
+                data: None,
+                response: true,
+            }),
+        ));
+        todo_list.push(URB::new(
+            self.device_slot_id,
+            RequestedOperation::Control(ControlTransfer {
+                request_type: bmRequestType::new(
+                    Direction::Out,
+                    DataTransferType::Vendor,
+                    Recipient::Device,
+                ),
+                request: bRequest::CH341_CMD_C2,
+                index: 0,
+                value: 0x009f,
+                data: None,
+                response: true,
+            }),
+        ));
         Some(todo_list)
     }
 }
