@@ -63,6 +63,7 @@ enum ParserStateMachine {
 
 #[derive(Clone, Debug)]
 pub enum ParserMetaData {
+    USBToSerial,
     UVC(u8),
     HID,
     Unknown(ParserMetaDataUnknownSituation),
@@ -79,11 +80,15 @@ pub enum ParserMetaDataUnknownSituation {
 impl ParserMetaData {
     //refer https://www.usb.org/defined-class-codes
     pub fn determine(class: u8, subclass: u8, protocol: u8) -> Self {
+        trace!("determine metadata from class:{},subclass:{},protocol:{}", class, subclass, protocol);
         match (class.into(), subclass, protocol) {
             (StandardUSBDeviceClassCode::Miscellaneous, 0x02, 0x01) => {
                 return Self::Unknown(ParserMetaDataUnknownSituation::ReferIAC)
             }
             (StandardUSBDeviceClassCode::HID, _, _) => return Self::HID,
+            (StandardUSBDeviceClassCode::VendorSpecific,0,0)=> {
+                return Self::USBToSerial
+            }
             (StandardUSBDeviceClassCode::ReferInterfaceDescriptor, _, _) => {
                 return Self::Unknown(ParserMetaDataUnknownSituation::ReferInterface)
             }
@@ -151,16 +156,19 @@ where
     pub fn single_state_cycle(&mut self) -> bool {
         match &self.state {
             ParserStateMachine::Device => {
+                trace!("parse single device desc!");
                 self.result = self.parse_single_device_descriptor().ok();
                 self.state = ParserStateMachine::NotReady;
                 trace!("state change:{:?}", self.state);
-                self.current = 0;
+                self.current = 0; 
                 self.current_len = 0;
                 true
             }
             ParserStateMachine::Config(index) => {
                 let num_of_configs = self.num_of_configs();
+                trace!("parse config desc!,num of configs:{}", num_of_configs);
                 let current_index = *index;
+                trace!("current index:{}", current_index);
                 if current_index >= num_of_configs {
                     self.state = ParserStateMachine::END;
                     trace!("state change:{:?}", self.state);
@@ -176,6 +184,7 @@ where
                 trace!("state change:{:?}", self.state);
                 true
             }
+        
             ParserStateMachine::END => panic!("should not call anymore while reaching end"),
             ParserStateMachine::NotReady => {
                 if let Some(res) = &self.result
@@ -216,8 +225,27 @@ where
         trace!("parse single device desc!");
         if let USBDescriptor::Device(dev) = self.parse_any_descriptor()? {
             {
+                trace!("parsed device.len:{}", dev.len);
+                trace!("parsed device.descriptor_type:{}", dev.descriptor_type);
+                let cd_usb = dev.cd_usb;
+                trace!("parsed device.cd_usb:{:x}", cd_usb);
+                trace!("parsed device.class:{}", dev.class);
+                trace!("parsed device.subclass:{}", dev.subclass);
+                trace!("parsed device.protocol:{}", dev.protocol);
+                trace!("parsed device.max_packet_size0:{}", dev.max_packet_size0);
+                let vendor = dev.vendor;
+                trace!("parsed device.vendor:{:x}", vendor);
+                let product_id = dev.product_id;
+                trace!("parsed device.product_id:{:x}", product_id);
+                let devicee = dev.device;
+                trace!("parsed device.device:{}", devicee);
+                trace!("parsed device.manufacture:{}", dev.manufacture);
+                trace!("parsed device.product:{}", dev.product);
+                trace!("parsed device.serial_number:{}", dev.serial_number);
+                trace!("parsed device.num_configurations:{}", dev.num_configurations);
                 match self.metadata {
                     ParserMetaData::NotDetermined => {
+                        trace!("ParserMetaData::NotDetermined");
                         self.metadata =
                             ParserMetaData::determine(dev.class, dev.subclass, dev.protocol)
                     }
@@ -240,6 +268,15 @@ where
         let mut cfg =
             USBDescriptor::from_slice(&raw, self.metadata.clone()).and_then(|converted| {
                 if let USBDescriptor::Configuration(cfg) = converted {
+                    trace!("get ch340 config desc!");
+                    trace!("parsed config.len:{}", cfg.length());
+                    trace!("parsed config.ty:{}", cfg.ty());
+                    trace!("parsed config.total_length:{}", cfg.total_length());
+                    trace!("parsed config.num_interfaces:{}", cfg.num_interfaces());
+                    trace!("parsed config.config_val:{}", cfg.config_val());
+                    trace!("parsed config.config_string:{}", cfg.config_string());
+                    trace!("parsed config.attributes:{}", cfg.attributes());
+                    trace!("parsed config.max_power:{}", cfg.max_power());
                     Ok(TopologicalUSBDescriptorConfiguration {
                         data: cfg,
                         child: Vec::new(),

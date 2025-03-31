@@ -1,6 +1,10 @@
 # ChangeLog
 
+<<<<<<< HEAD
 ## unreleased  v 0.0.0
+=======
+## 2025-1-24 v 0.0.0 usb-serial-dev
+>>>>>>> usb-serial-dev
 
 ### Added
 
@@ -11,6 +15,116 @@
 ### Fixed
 
 ### Question
+<<<<<<< HEAD
+=======
+## 2025-2-3 v 0.0.0 usb-serial-dev
+
+### Added
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中给CdcSerialDriver添加成员和write方法。
+- doc添加开发记录，规划开发方案。
+- `crates/driver_usb/src/usb/trasnfer`中添加bulk.rs，同步修改RequestedOperation和urb_request函数。
+- 
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+
+## 2025-1-24 v 0.0.0 usb-serial-dev
+
+### Added
+- 'crates/driver_usb/src/usb/universal_drivers/cdc_drivers'添加buffer.rs,读写缓冲区定义。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中添加读写缓冲区的Option封装到驱动实例中，初始化为None。
+
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+
+
+## 2025-1-27 v 0.0.0 usb-serial-dev
+
+### Added
+- `crates/driver_usb/src/usb/trasnfer/control.rs`中添加bRequest枚举成员选项，增加厂商自定义的几条命令。参考ch341.h。CMD_R、CMD_W、CMD_C1、CMD_C2、CMD_C3。
+- 'crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs'中添加CH341配置的URB生成语句（todolist）。
+
+
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+- 能不能先使用中断传输看一看效果。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中，CH341配置的URB生成语句，还没有声明一个buffer。这个buffer要定义在ch341结构体中。
+- ch341结构体需要添加控制传输缓冲区，读缓冲区和写缓冲区。
+- 配置完成之后下一步，设计批量传输模式。
+
+## 2025-1-24 v 0.0.0 usb-serial-dev
+
+### Added
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`中添加`CdcSerialDriver`的`prepare_for_drive`方法，构造一个设置配置描述符的URB请求。
+
+
+
+### Changed
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`的驱动实例增加了插槽号，接口值、配置值等字段，便于配置URB。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`修改了驱动实例的new方法，修改为new_and_init方法，添加内容。
+- `crates/driver_usb/src/usb/universal_drivers/cdc_drivers/cdc_serial.rs`修改should_active中返回值的内容。
+
+### Removed
+
+### Fixed
+
+### Question
+
+
+## 2025-1-23 v 0.0.0usb-serial-dev
+
+### Added
+- CH340描述符信息，分别通过Linux和driver_usb的方法读到。doc中添加“ch340信息”（ch340描述符）。
+
+### Changed
+- CH340的USB设备类型是255,不是CDC，因此需要修改`crates/driver_usb/src/usb/descriptors/parser.rs`的`determine`函数逻辑。切换为VendorSpecific。
+
+### Removed
+
+### Fixed
+
+### Question
+
+## 2025-1-22  v 0.0.0 usb-serial-dev
+
+### Added
+
+- `src\usb\descriptors\parser.rs`中`ParserMetaData`枚举添加`USBToSerial`，用于标识USB转串口设备。
+- `src\usb\descriptors\parser.rs`中`ParserMetaData`枚举的`determine`方法，添加`StandardUSBDeviceClassCode::CommunicationsAndCDCControl`设备类型的定义，返回`USBToSerial`。
+- `src\usb\universal_drivers\cdc_drivers\cdc_serial.rs`的` CdcSerialDriver`结构体添加`config`成员，`Arc`和`SpinNoIrq`封装的`USBSystemConfig<O>`类型。
+- `src\usb\universal_drivers\cdc_drivers\cdc_serial.rs`的` CdcSerialDriver`结构体添加`new`方法。
+- `src\usb\universal_drivers\cdc_drivers\cdc_serial.rs`中补充`CdcSerialDriverModule`的`should_active`的具体实现。获取设备类型，若为`cdc`，则需要启用。
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Question
+
+- USB转串口应该属于`StandardUSBDeviceClassCode::CommunicationsAndCDCControl`。目前整个系统只会使用一种USB转串口设备，所以暂时仅使用设备类别来匹配驱动。
+- uvc驱动使用`ParserMetaData`来匹配驱动模块（should_active），而hid_mouse使用设备描述符中的class来表示。**添加了USB转串口的`ParserMetaData`的定义，但是最后USB转串口的驱动模块中还是使用设备描述符中的class来匹配驱动。**
+- 
+
+>>>>>>> usb-serial-dev
 
 ## 2025-1-16   v 0.0.0 usb-serial-dev
 
@@ -34,4 +148,7 @@
 ### Question
 
 - `cdc_serial.rs`引入`descriptors::{desc_device::StandardUSBDeviceClassCode, desc_endpoint::Endpoint}`，这个描述符需要修改吗。
+<<<<<<< HEAD
 
+=======
+>>>>>>> usb-serial-dev
