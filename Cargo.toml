@@ -75,9 +75,8 @@ members = [
     "apps/task/priority",
     "apps/task/tls",
     "apps/cli",
-    "apps/usb",
     "apps/boards/raspi4",   
-    "apps/boards/raspi4-usb", "apps/uvc",
+    "apps/boards/raspi4-usb",
     "apps/boards/raspi4-usb", "crates/axdtb",
 ]
 

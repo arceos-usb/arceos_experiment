@@ -199,30 +199,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arceos-usb"
-version = "0.1.0"
-dependencies = [
- "async-lock",
- "axalloc",
- "axfeat",
- "axhal",
- "axstd",
- "axusb_host 0.1.0",
- "lazy_static",
-]
-
-[[package]]
-name = "arceos-uvc"
-version = "0.1.0"
-dependencies = [
- "axalloc",
- "axfeat",
- "axhal",
- "axstd",
- "driver_usb",
-]
-
-[[package]]
 name = "arceos-yield"
 version = "0.1.0"
 dependencies = [
@@ -377,7 +353,7 @@ dependencies = [
  "axconfig",
  "axdtb",
  "axhal",
- "axusb_host 0.1.0 (git+https://github.com/arceos-usb/axusb_host.git)",
+ "axusb_host",
  "cfg-if",
  "driver_block",
  "driver_common",
@@ -625,32 +601,6 @@ dependencies = [
  "scheduler",
  "spinlock",
  "timer_list",
-]
-
-[[package]]
-name = "axusb_host"
-version = "0.1.0"
-dependencies = [
- "async-lock",
- "async-ringbuf",
- "async-trait",
- "axhid",
- "bit_field",
- "byteorder",
- "dynamic_join_array",
- "embassy-futures",
- "futures",
- "lazy_static",
- "log",
- "match_cfg",
- "nosy",
- "num-derive 0.4.2",
- "num-traits",
- "ringbuf",
- "squeak",
- "tock-registers 0.9.0",
- "usb-descriptor-decoder",
- "xhci",
 ]
 
 [[package]]
