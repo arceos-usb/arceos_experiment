@@ -656,7 +656,7 @@ dependencies = [
 [[package]]
 name = "axusb_host"
 version = "0.1.0"
-source = "git+https://github.com/arceos-usb/axusb_host.git#8e12efe77cf8c3abdd1fe4d7f662fd25f58a70a7"
+source = "git+https://github.com/arceos-usb/axusb_host.git#e6da000957c57f6296beac03d5b28318851448b0"
 dependencies = [
  "async-lock",
  "async-ringbuf",
@@ -1150,8 +1150,7 @@ dependencies = [
 [[package]]
 name = "dynamic_join_array"
 version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4079e8863a83bbf9a6aa92bcf3afefdec9c1eb6facf2e37295d0733d34fcb2cd"
+source = "git+https://github.com/dbydd/dynamic_join_array#ce39d3bd24fa7072abc7749572b89e2c3e8e4c1d"
 dependencies = [
  "async-lock",
  "futures",
@@ -1355,9 +1354,9 @@ checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 
 [[package]]
 name = "half"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7db2ff139bba50379da6aa0766b52fdcb62cb5b263009b09ed58ba604e14bbd1"
+checksum = "459196ed295495a68f7d7fe1d84f6c4b7ff0e21fe3017b2f283c6fac3ad803c9"
 dependencies = [
  "cfg-if",
  "crunchy",
@@ -2338,7 +2337,7 @@ checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
 [[package]]
 name = "usb-descriptor-decoder"
 version = "0.1.0"
-source = "git+https://github.com/arceos-usb/usb-descriptor-decoder-rs.git?branch=modularize#60c95cfc8872367a3542304ec7998a4b49d64571"
+source = "git+https://github.com/arceos-usb/usb-descriptor-decoder-rs.git?branch=modularize#f7700b877b9897aec3c015909af7100608a72c33"
 dependencies = [
  "bit_field",
  "log",
